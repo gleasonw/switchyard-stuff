@@ -1,11 +1,15 @@
 from switchyard.lib.userlib import *
 
 def main(net):
+    # constant: forwarding table size (int)
+    # constant: timeout length in seconds (int)
+
     # add some informational text about ports on this device
     log_info ("Hub is starting up with these ports:")
     for port in net.ports():
         log_info ("{}: ethernet address {}".format(port.name, port.ethaddr))
-
+        # make a list of our hub addresses so we drop requests coming to us
+    #start timer
     while True:
         try:
             timestamp,input_port,packet = net.recv_packet()
@@ -16,14 +20,29 @@ def main(net):
             # try again...
             continue
 
-        # send the packet out all ports *except*
-        # the one on which it arrived
-        # Check destination, check cast type
-        # If new destination, add to forwarding table (dictionary)
-            # If table full, take oldest entry out
+        # Check if destination in our list of hub addresses
+            # If yes, drop it
+            # if not, check if in our forwarding table
+                # if yes, send it there and update forwarding table (different function?)
+                # if not, broadcast
+                    #sendAll(net, input_port)
+
+        # new function SendToAll? Then SendSpecific(proper address)?
+        # check if any entries have timed out
+
+        # shutdown is the last thing we should do
+
+        net.shutdown()
+
+# send the packet out all ports *except*
+# the one on which it arrived
+def sendAll(net, inputPort, packet):
         for port in net.ports():
-            if port.name != input_port:
+            if port.name != inputPort:
                 net.send_packet(port.name, packet)
 
-    # shutdown is the last thing we should do
-    net.shutdown()
+def sendSpecific(net, destPort, packet):
+    net.send_packet(destPort, packet)
+
+
+
