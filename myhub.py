@@ -37,13 +37,12 @@ def main(net):
             pass #drop it
         elif header.dst in forwarding_table:
             sendSpecific(net, header.dst, packet)
-            if (len(forwarding_table < max_storage)):
-                removeOneRule(forwarding_table, time_table)
-            recordTimestamp(header.dst, time_table)
         else:
             sendAll(net, input_port, packet)
         
         if header.src not in forwarding_table:
+            if (len(forwarding_table >= max_storage)):
+                removeOneRule(forwarding_table, time_table)
             recordAddress(input_port, header.src, forwarding_table, time_table)
 
 
@@ -91,9 +90,9 @@ def removeTimedOut(time_table, forwarding_table, timeout):
 
 #determined by least recently used rule
 def removeOneRule(forwarding_table, time_table):
-    oldest = 2147483647
+    oldest = max(time_table.values())
     oldest_addr = []
-    for k,v in time_table.keys():
+    for k,v in time_table:
         if v < oldest:
             oldest = v
             oldest_addr.insert[0] = k
