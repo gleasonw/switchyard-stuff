@@ -1,9 +1,11 @@
 from switchyard.lib.userlib import *
-import datetime
+import time
 
 def main(net):
     # constant: forwarding table size (int)
     # constant: timeout length in seconds (int)
+    timeout = 30
+    max_storage = 5
 
     # add some informational text about ports on this device
     log_info ("Hub is starting up with these ports:")
@@ -29,12 +31,14 @@ def main(net):
         header = packet[0]
 
         #should we check for timedout entries here? or after we had new to table
-        removeTimedOut(time_table, forwarding_table)
+        removeTimedOut(time_table, forwarding_table, timeout)
 
         if header.dst in mymacs:
             pass #drop it
         elif header.dst in forwarding_table:
             sendSpecific(net, header.dst, packet)
+            if (len(forwarding_table < max_storage)):
+                removeOneRule(forwarding_table, time_table)
             recordTimestamp(header.dst, time_table)
         else:
             sendAll(net, input_port, packet)
@@ -76,12 +80,27 @@ def recordAddress(port, header, forwarding_table, time_table):
     recordTimestamp(header, time_table)
 
 def recordTimestamp(header, time_table):
-    time_table.update(header, datetime.datetime.now().time())
+    time_table.update(header, time.perf_counter())
 
 #remove from table after 30s to adapt to changes in network topology
-def removeTimedOut(time_table, forwarding_table):
+def removeTimedOut(time_table, forwarding_table, timeout):
     for k,v in time_table:
-        if (time_table.get(k) - datetime.datetime.now().time) > 30:
+        if (time_table.get(k) - time.perf_counter()) > timeout:
             forwarding_table.pop(k)
             time_table.pop(k)
+
+#determined by least recently used rule
+def removeOneRule(forwarding_table, time_table):
+    oldest = 2147483647
+    oldest_addr = []
+    for k,v in time_table.keys():
+        if v < oldest:
+            oldest = v
+            oldest_addr.insert[0] = k
+    forwarding_table.pop(oldest_addr[0])
+    time_table.pop(oldest_addr[0])
+
+
+
+
 
