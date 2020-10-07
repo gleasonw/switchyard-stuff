@@ -29,20 +29,22 @@ def main(net):
             continue
 
         header = packet[0]
+        destinationAddress = header.dst
 
         #should we check for timedout entries here? or after we had new to table
         removeTimedOut(time_table, forwarding_table, timeout)
 
-        if header.dst in mymacs:
-            pass #drop it
-        elif header.dst in forwarding_table:
-            sendSpecific(net, header.dst, packet)
+        if destinationAddress in mymacs:
+            pass
+        elif destinationAddress in forwarding_table:
+            sendSpecific(net, destinationAddress, packet)
         else:
             sendAll(net, input_port, packet)
         
-        if (len(forwarding_table >= max_storage)):
+        if len(forwarding_table) >= max_storage:
             removeOneRule(forwarding_table, time_table)
-        recordAddress(input_port, header.src, forwarding_table, time_table)
+
+        recordAddress(input_port, header.src, forwarding_table, time.perf_counter())
 
 
 
@@ -74,32 +76,33 @@ def sendSpecific(net, destPort, packet):
     net.send_packet(destPort, packet)
 
 #"learn" what puts are associated with what addresses
-def recordAddress(port, header, forwarding_table, time_table):
+def recordAddress(inputPort, header, forwarding_table, timestamp):
     #check if it is has timedout
-    forwarding_table.update(header, port)
-    recordTimestamp(header, time_table)
-
-#keep track of what time an address sent a message 
-def recordTimestamp(header, time_table):
-    time_table.update(header, time.perf_counter())
+    forwarding_table.update(header, (inputPort, timestamp))
 
 #remove from table after 30s to adapt to changes in network topology
 def removeTimedOut(time_table, forwarding_table, timeout):
     for k,v in time_table:
-        if (time_table.get(k) - time.perf_counter()) > timeout:
+        currentTimeStamp = forwarding_table.get(k)[1]
+        if (currentTimeStamp - time.perf_counter()) > timeout:
             forwarding_table.pop(k)
-            time_table.pop(k)
 
 #determined by least recently used rule
-def removeOneRule(forwarding_table, time_table):
-    oldest = max(time_table.values())
-    oldest_addr = []
-    for k,v in time_table:
-        if v < oldest:
-            oldest = v
-            oldest_addr.insert[0] = k
-    forwarding_table.pop(oldest_addr[0])
-    time_table.pop(oldest_addr[0])
+def removeOneRule(forwarding_table):
+    oldestAddress = min(forwarding_table.keys(), key=(lambda k: forwarding_table[k][1]))
+    forwarding_table.pop(oldestAddress)
+
+
+
+
+    # oldest = max(time_table.values())
+    # oldest_addr = []
+    # for k,v in time_table:
+    #     if v < oldest:
+    #         oldest = v
+    #         oldest_addr.insert[0] = k
+    # forwarding_table.pop(oldest_addr[0])
+    # time_table.pop(oldest_addr[0])
 
 
 
