@@ -11,6 +11,9 @@ def main(net):
         log_info ("{}: ethernet address {}".format(port.name, port.ethaddr))
         # make a list of our hub addresses so we drop requests coming to us
     #start timer
+    my_interfaces = net.interfaces()
+    mymacs = [intf.ethaddr for intf in my_interfaces]
+
     forwarding_table = {}
     time_table = {}
     while True:
@@ -32,10 +35,10 @@ def main(net):
             # If yes, drop it
             # if not, check if in our forwarding table
                 # if yes, send it there and update forwarding table (different function?)
-                    #send
+                    #sendSpecific(net, destPort, packet)
                     #recordTimestamp(header, time_table)
                 # if not, broadcast
-                    #sendAll(net, input_port)
+                    #sendAll(net, input_port, packet)
 
         # new function SendToAll? Then SendSpecific(proper address)?
         # check if any entries have timed out
@@ -56,14 +59,16 @@ def sendSpecific(net, destPort, packet):
 
 def recordAddress(port, header, forwarding_table, time_table):
     #check if it is has timedout
-    forwarding_table.update(header.dst, port)
+    forwarding_table.update(header.src, port)
     recordTimestamp(header, time_table)
 
 def recordTimestamp(header, time_table):
-    time_table.update(header.dst, datetime.datetime.now().time())
+    time_table.update(header.src, datetime.datetime.now().time())
 
+#remove from table after 30s to adapt to changes in network topology
 def removeTimedOut(time_table, forwarding_table):
     for k,v in time_table:
         if time_table.get(k) - datetime.datetime.now().time > 30:
             forwarding_table.pop(k)
+            time_table.pop(k)
 
