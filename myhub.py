@@ -31,6 +31,19 @@ def main(net):
         #should we check for timedout entries here? or after we had new to table
         removeTimedOut(time_table, forwarding_table)
 
+        if header.dst in mymacs:
+            pass #drop it
+        elif header.dst in forwarding_table:
+            sendSpecific(net, header.dst, packet)
+            recordTimestamp(header.dst, time_table)
+        else:
+            sendAll(net, input_port, packet)
+        
+        if header.src not in forwarding_table:
+            recordAddress(input_port, header.src, forwarding_table, time_table)
+
+
+
         # Check if destination in our list of hub addresses
             # If yes, drop it
             # if not, check if in our forwarding table
@@ -59,16 +72,16 @@ def sendSpecific(net, destPort, packet):
 
 def recordAddress(port, header, forwarding_table, time_table):
     #check if it is has timedout
-    forwarding_table.update(header.src, port)
+    forwarding_table.update(header, port)
     recordTimestamp(header, time_table)
 
 def recordTimestamp(header, time_table):
-    time_table.update(header.src, datetime.datetime.now().time())
+    time_table.update(header, datetime.datetime.now().time())
 
 #remove from table after 30s to adapt to changes in network topology
 def removeTimedOut(time_table, forwarding_table):
     for k,v in time_table:
-        if time_table.get(k) - datetime.datetime.now().time > 30:
+        if (time_table.get(k) - datetime.datetime.now().time) > 30:
             forwarding_table.pop(k)
             time_table.pop(k)
 
