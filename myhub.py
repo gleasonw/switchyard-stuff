@@ -19,6 +19,7 @@ def main(net):
 
     forwarding_table = {}
     time_table = {}
+
     while True:
         try:
             timestamp, input_port, packet = net.recv_packet()
@@ -31,12 +32,14 @@ def main(net):
 
         header = packet[0]
         destinationAddress = header.dst
+        sourceAddress = header.src
         removeTimedOut(time_table, forwarding_table, timeout)
 
         if destinationAddress in mymacs:
             pass
         elif destinationAddress in forwarding_table:
-            # If it is in the table, we need the port we last received packets from it
+            # If destination is in the table, we need the port through which
+            # we last received packets from the destination
             properPort = forwarding_table[destinationAddress][0]
             sendSpecific(net, properPort, packet)
         else:
@@ -45,9 +48,9 @@ def main(net):
         if len(forwarding_table) >= max_storage:
             removeOneRule(forwarding_table)
 
-        recordAddress(input_port, header.src, forwarding_table, time.perf_counter())
+        recordAddress(input_port, sourceAddress, forwarding_table, time.perf_counter())
 
-        net.shutdown()
+    net.shutdown()
 
 
 # send the packet out all ports *except*
