@@ -19,8 +19,9 @@ def main(net):
 
     forwarding_table = {}
     time_table = {}
-
+    counter = 0
     while True:
+        counter = counter + 1
         try:
             timestamp, input_port, packet = net.recv_packet()
         except Shutdown:
@@ -33,7 +34,7 @@ def main(net):
         header = packet[0]
         destinationAddress = header.dst
         sourceAddress = header.src
-        removeTimedOut(time_table, forwarding_table, timeout)
+        removeTimedOut(forwarding_table, timeout)
 
         if destinationAddress in mymacs:
             pass
@@ -73,8 +74,8 @@ def recordAddress(inputPort, header, forwarding_table, timestamp):
 
 
 # remove from table after 30s to adapt to changes in network topology
-def removeTimedOut(time_table, forwarding_table, timeout):
-    for k, v in time_table:
+def removeTimedOut(forwarding_table, timeout):
+    for k in forwarding_table.keys():
         currentTimeStamp = forwarding_table.get(k)[1]
         if (currentTimeStamp - time.perf_counter()) > timeout:
             forwarding_table.pop(k)
