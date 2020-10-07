@@ -40,10 +40,9 @@ def main(net):
         else:
             sendAll(net, input_port, packet)
         
-        if header.src not in forwarding_table:
-            if (len(forwarding_table >= max_storage)):
-                removeOneRule(forwarding_table, time_table)
-            recordAddress(input_port, header.src, forwarding_table, time_table)
+        if (len(forwarding_table >= max_storage)):
+            removeOneRule(forwarding_table, time_table)
+        recordAddress(input_port, header.src, forwarding_table, time_table)
 
 
 
@@ -70,14 +69,17 @@ def sendAll(net, input_port, packet):
             if port.name != input_port:
                 net.send_packet(port.name, packet)
 
+#send to specific port if the port is located in forwarding table
 def sendSpecific(net, destPort, packet):
     net.send_packet(destPort, packet)
 
+#"learn" what puts are associated with what addresses
 def recordAddress(port, header, forwarding_table, time_table):
     #check if it is has timedout
     forwarding_table.update(header, port)
     recordTimestamp(header, time_table)
 
+#keep track of what time an address sent a message 
 def recordTimestamp(header, time_table):
     time_table.update(header, time.perf_counter())
 
