@@ -26,11 +26,7 @@ def main(net):
         header = packet[0]
 
         #should we check for timedout entries here? or after we had new to table
-
-        if header.src not in forwarding_table:
-            record_address(port, header, forwarding_table)
-            record_timestamp(header, time_table)
-
+        remove_timed_out(time_table, forwarding_table)
 
         # Check if destination in our list of hub addresses
             # If yes, drop it
@@ -60,10 +56,10 @@ def sendSpecific(net, destPort, packet):
 
 def record_address(port, header, forwarding_table):
     #check if it is has timedout
-    forwarding_table.update(header.src, port)
+    forwarding_table.update(header.dst, port)
 
 def record_timestamp(header, time_table):
-    time_table.update(header.src, datetime.datetime.now().time())
+    time_table.update(header.dst, datetime.datetime.now().time())
 
 def remove_timed_out(time_table, forwarding_table):
     for k,v in time_table:
