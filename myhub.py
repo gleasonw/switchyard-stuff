@@ -26,19 +26,19 @@ def main(net):
         header = packet[0]
 
         #should we check for timedout entries here? or after we had new to table
-        remove_timed_out(time_table, forwarding_table)
+        removeTimedOut(time_table, forwarding_table)
 
         # Check if destination in our list of hub addresses
             # If yes, drop it
             # if not, check if in our forwarding table
                 # if yes, send it there and update forwarding table (different function?)
-                    #record_address(port, header, forwarding_table)
+                    #send
+                    #recordTimestamp(header, time_table)
                 # if not, broadcast
                     #sendAll(net, input_port)
 
         # new function SendToAll? Then SendSpecific(proper address)?
         # check if any entries have timed out
-        #remove_timed_out(time_table, forwarding_table)
 
         # shutdown is the last thing we should do
 
@@ -46,22 +46,23 @@ def main(net):
 
 # send the packet out all ports *except*
 # the one on which it arrived
-def sendAll(net, inputPort, packet):
+def sendAll(net, input_port, packet):
         for port in net.ports():
-            if port.name != inputPort:
+            if port.name != input_port:
                 net.send_packet(port.name, packet)
 
 def sendSpecific(net, destPort, packet):
     net.send_packet(destPort, packet)
 
-def record_address(port, header, forwarding_table):
+def recordAddress(port, header, forwarding_table, time_table):
     #check if it is has timedout
     forwarding_table.update(header.dst, port)
+    recordTimestamp(header, time_table)
 
-def record_timestamp(header, time_table):
+def recordTimestamp(header, time_table):
     time_table.update(header.dst, datetime.datetime.now().time())
 
-def remove_timed_out(time_table, forwarding_table):
+def removeTimedOut(time_table, forwarding_table):
     for k,v in time_table:
         if time_table.get(k) - datetime.datetime.now().time > 30:
             forwarding_table.pop(k)
