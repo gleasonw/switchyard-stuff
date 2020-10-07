@@ -31,14 +31,14 @@ def main(net):
 
         header = packet[0]
         destinationAddress = header.dst
-
-        # should we check for timedout entries here? or after we had new to table
         removeTimedOut(time_table, forwarding_table, timeout)
 
         if destinationAddress in mymacs:
             pass
         elif destinationAddress in forwarding_table:
-            sendSpecific(net, destinationAddress, packet)
+            # If it is in the table, we need the port we last received packets from it
+            properPort = forwarding_table[destinationAddress][0]
+            sendSpecific(net, properPort, packet)
         else:
             sendAll(net, input_port, packet)
 
@@ -46,20 +46,6 @@ def main(net):
             removeOneRule(forwarding_table)
 
         recordAddress(input_port, header.src, forwarding_table, time.perf_counter())
-
-        # Check if destination in our list of hub addresses
-        # If yes, drop it
-        # if not, check if in our forwarding table
-        # if yes, send it there and update forwarding table (different function?)
-        # sendSpecific(net, destPort, packet)
-        # recordTimestamp(header, time_table)
-        # if not, broadcast
-        # sendAll(net, input_port, packet)
-
-        # new function SendToAll? Then SendSpecific(proper address)?
-        # check if any entries have timed out
-
-        # shutdown is the last thing we should do
 
         net.shutdown()
 
@@ -80,7 +66,7 @@ def sendSpecific(net, destPort, packet):
 # "learn" what puts are associated with what addresses
 def recordAddress(inputPort, header, forwarding_table, timestamp):
     # check if it is has timedout
-    forwarding_table.update(header, (inputPort, timestamp))
+    forwarding_table[header] = (inputPort, timestamp)
 
 
 # remove from table after 30s to adapt to changes in network topology
