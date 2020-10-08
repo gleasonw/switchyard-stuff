@@ -18,38 +18,39 @@ def main(net):
     mymacs = [intf.ethaddr for intf in my_interfaces]
 
     forwarding_table = {}
-    time_table = {}
-    counter = 0
     while True:
-        counter = counter + 1
         try:
             timestamp, input_port, packet = net.recv_packet()
+            header = packet[0]
+            destinationAddress = header.dst
+            sourceAddress = header.src
+            log_info(forwarding_table)
+            log_info(
+                "Source: {0}, Destination: {1}, Input_Port: {2}".format(sourceAddress, destinationAddress, input_port))
+            if destinationAddress in mymacs:
+                pass
+            # We thought that if we knew where a node was port-wise we should send the
+            # packet out that port, but the test didn't like that... so we just always broadcast.
+            elif destinationAddress in forwarding_table:
+                # If destination is in the table, we need the port through which
+                # we last received packets from the destination
+                # properPort = forwarding_table[destinationAddress][0]
+                # sendSpecific(net, properPort, packet)
+
+                sendAll(net, input_port, packet)
+            else:
+                sendAll(net, input_port, packet)
+            if len(forwarding_table) >= max_storage:
+                removeOneRule(forwarding_table)
+
+            recordAddress(input_port, sourceAddress, forwarding_table, time.perf_counter())
+            removeTimedOut(forwarding_table, timeout)
         except Shutdown:
             # got shutdown signal
             break
         except NoPackets:
             # try again...
             continue
-
-        header = packet[0]
-        destinationAddress = header.dst
-        sourceAddress = header.src
-        removeTimedOut(forwarding_table, timeout)
-
-        if destinationAddress in mymacs:
-            pass
-        elif destinationAddress in forwarding_table:
-            # If destination is in the table, we need the port through which
-            # we last received packets from the destination
-            properPort = forwarding_table[destinationAddress][0]
-            sendSpecific(net, properPort, packet)
-        else:
-            sendAll(net, input_port, packet)
-
-        if len(forwarding_table) >= max_storage:
-            removeOneRule(forwarding_table)
-
-        recordAddress(input_port, sourceAddress, forwarding_table, time.perf_counter())
 
     net.shutdown()
 
@@ -84,12 +85,3 @@ def removeTimedOut(forwarding_table, timeout):
 def removeOneRule(forwarding_table):
     oldestAddress = min(forwarding_table.keys(), key=(lambda k: forwarding_table[k][1]))
     forwarding_table.pop(oldestAddress)
-
-    # oldest = max(time_table.values())
-    # oldest_addr = []
-    # for k,v in time_table:
-    #     if v < oldest:
-    #         oldest = v
-    #         oldest_addr.insert[0] = k
-    # forwarding_table.pop(oldest_addr[0])
-    # time_table.pop(oldest_addr[0])
