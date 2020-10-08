@@ -69,7 +69,6 @@ def sendSpecific(net, destPort, packet):
 
 # "learn" what puts are associated with what addresses
 def recordAddress(inputPort, header, forwarding_table, timestamp):
-    # check if it is has timedout
     forwarding_table[header] = (inputPort, timestamp)
 
 
