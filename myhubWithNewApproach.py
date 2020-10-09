@@ -45,7 +45,7 @@ def main(net):
                 # we last received packets from the destination
                 # properPort = forwarding_table[destinationAddress][0]
                 # sendSpecific(net, properPort, packet)
-                forwarding_table = iterateNumberPacketsSent(destinationAddress)
+                forwarding_table = iterateNumberPacketsSent(forwarding_table,destinationAddress)
                 sendAll(net, input_port, packet)
             else:
                 sendAll(net, input_port, packet)
@@ -75,10 +75,10 @@ def sendAll(net, input_port, packet):
 def sendSpecific(net, destPort, packet):
     net.send_packet(destPort, packet)
 
-def iterateNumberPacketsSent(address):
+def iterateNumberPacketsSent(forwarding_table, address):
     currentNumberSent = forwarding_table[address][2]
     currentNumberSent = currentNumberSent + 1
-    forwarding_table[address][2] = currentNumberSent
+    forwarding_table[address] = (forwarding_table[address][0], forwarding_table[address][1], currentNumberSent)
     return forwarding_table
 
 # "learn" which ports are associated with which addresses
