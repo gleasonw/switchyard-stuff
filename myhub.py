@@ -19,32 +19,22 @@ def main(net):
 
     forwarding_table = {}
     while True:
+        removeTimedOut(forwarding_table, timeout)
         try:
             timestamp, input_port, packet = net.recv_packet()
             header = packet[0]
             destinationAddress = header.dst
             sourceAddress = header.src
-            log_info(forwarding_table)
-            log_info(
-                "Source: {0}, Destination: {1}, Input_Port: {2}".format(sourceAddress, destinationAddress, input_port))
             if destinationAddress in mymacs:
                 pass
-            # We thought that if we knew where a node was port-wise we should send the
-            # packet out that port, but the test didn't like that... so we just always broadcast.
             elif destinationAddress in forwarding_table:
-                # If destination is in the table, we need the port through which
-                # we last received packets from the destination
-                # properPort = forwarding_table[destinationAddress][0]
-                # sendSpecific(net, properPort, packet)
-
-                sendAll(net, input_port, packet)
+                properPort = forwarding_table[destinationAddress][0]
+                sendSpecific(net, properPort, packet)
             else:
                 sendAll(net, input_port, packet)
             if len(forwarding_table) >= max_storage:
                 removeOneRule(forwarding_table)
-
             recordAddress(input_port, sourceAddress, forwarding_table, time.perf_counter())
-            removeTimedOut(forwarding_table, timeout)
         except Shutdown:
             # got shutdown signal
             break
@@ -77,7 +67,8 @@ def recordAddress(inputPort, header, forwarding_table, timestamp):
 def removeTimedOut(forwarding_table, timeout):
     for k in forwarding_table.keys():
         currentTimeStamp = forwarding_table.get(k)[1]
-        if (currentTimeStamp - time.perf_counter()) > timeout:
+        if abs(currentTimeStamp - time.perf_counter()) > timeout:
+            log_info("Dropping entry {0}".format(k))
             forwarding_table.pop(k)
 
 
