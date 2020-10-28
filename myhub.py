@@ -67,7 +67,9 @@ def recordAddress(inputPort, header, forwarding_table, timestamp):
 def removeTimedOut(forwarding_table, timeout):
     for k in forwarding_table.keys():
         currentTimeStamp = forwarding_table.get(k)[1]
-        if abs(currentTimeStamp - time.perf_counter()) > timeout:
+        timeDiff = int(abs(currentTimeStamp - time.perf_counter()))
+        log_info(timeDiff)
+        if timeDiff > timeout:
             log_info("Dropping entry {0}".format(k))
             forwarding_table.pop(k)
 
